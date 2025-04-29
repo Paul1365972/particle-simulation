@@ -1,7 +1,7 @@
 import { Particle } from '../simulation/particle'
 import { Camera } from './camera'
-import particleVertexShaderCode from './shaders/vertex.wgsl?raw'
-import particleFragmentShaderCode from './shaders/fragment.wgsl?raw'
+import particleVertexShaderCode from './shaders/particle_vertex.wgsl?raw'
+import particleFragmentShaderCode from './shaders/particle_fragment.wgsl?raw'
 import borderVertexShaderCode from './shaders/border_vertex.wgsl?raw'
 import borderFragmentShaderCode from './shaders/border_fragment.wgsl?raw'
 
@@ -23,7 +23,6 @@ export class WebGPURenderer {
 	private borderBindGroup: GPUBindGroup | null = null
 
 	private numParticles: number = 0
-	private particleRadius: number = 0
 	private camera: Camera
 	private readonly simulationWidth: number
 	private readonly simulationHeight: number
@@ -35,9 +34,8 @@ export class WebGPURenderer {
 		this.simulationHeight = simHeight
 	}
 
-	async initialize(numParticles: number, particleRadius: number): Promise<boolean> {
+	async initialize(numParticles: number): Promise<boolean> {
 		this.numParticles = numParticles
-		this.particleRadius = particleRadius
 
 		if (!navigator.gpu) {
 			return false
@@ -198,8 +196,8 @@ export class WebGPURenderer {
 		const uniformData = new Float32Array([
 			this.canvas.width,
 			this.canvas.height,
-			this.particleRadius,
 			camZoom,
+			0,
 			camX,
 			camY,
 			this.simulationWidth,

@@ -80,12 +80,12 @@ export class ParticleSimulation {
 				if (p1.id >= p2.id) {
 					continue
 				}
-				this.resolveCollision(p1, p2)
+				this.resolveCollisionElastic(p1, p2)
 			}
 		}
 	}
 
-	resolveCollision(p1: Particle, p2: Particle): void {
+	resolveCollisionElastic(p1: Particle, p2: Particle): void {
 		const minDist = p1.radius + p2.radius
 		const distSq = Vector2D.distanceSq(p1.position, p2.position)
 		if (distSq >= minDist * minDist || distSq < 0.01) {
@@ -112,6 +112,25 @@ export class ParticleSimulation {
 
 		const j = -velAlongNormal
 		const impulse = normal.clone().scale(j)
+
+		p1.velocity.sub(impulse)
+		p2.velocity.add(impulse)
+	}
+
+	resolveCollisionSoft(p1: Particle, p2: Particle): void {
+		const minDist = p1.radius + p2.radius
+		const distSq = Vector2D.distanceSq(p1.position, p2.position)
+		if (distSq >= minDist * minDist || distSq < 0.01) {
+			return
+		}
+
+		const dist = Math.sqrt(distSq)
+		const normal = p2.position
+			.clone()
+			.sub(p1.position)
+			.scale(1.0 / dist)
+
+		const impulse = normal.clone().scale(0.5)
 
 		p1.velocity.sub(impulse)
 		p2.velocity.add(impulse)

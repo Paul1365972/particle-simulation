@@ -1,8 +1,8 @@
-// Uniforms (matching particle shader's binding 1)
 struct SceneUniforms {
-    canvasSize: vec2<f32>,
-    particleRadius_cameraZoom: vec2<f32>, // particleRadius, cameraZoom
-    cameraOffset_simSize: vec4<f32>, // cameraX, cameraY, simWidth, simHeight
+    canvas_size: vec2<f32>,
+    camera_zoom: f32,
+    camera_offset: vec2<f32>,
+    sim_size: vec2<f32>,
 };
 @group(0) @binding(1) var<uniform> ubo: SceneUniforms;
 
@@ -12,26 +12,17 @@ struct VertexOutput {
 
 @vertex
 fn main(
-    @location(0) worldPos: vec2<f32> // Input vertex position (world coords)
+    @location(0) world_pos: vec2<f32>
 ) -> VertexOutput {
-    let canvas_width = ubo.canvasSize.x;
-    let canvas_height = ubo.canvasSize.y;
-    let camera_zoom = ubo.particleRadius_cameraZoom.y;
-    let camera_offset = ubo.cameraOffset_simSize.xy;
+    let world_pos_relative_to_camera = world_pos - ubo.camera_offset;
+    let scaled_pos = world_pos_relative_to_camera * ubo.camera_zoom;
 
-    // Transform world position to Normalized Device Coordinates (NDC)
-    let world_pos_relative_to_camera = worldPos - camera_offset;
-    let scaled_pos = world_pos_relative_to_camera * camera_zoom;
-
-    // Convert to NDC (-1 to 1 range)
-    // X: scaled_x / (canvas_width / 2) = scaled_x * 2.0 / canvas_width
-    // Y: scaled_y / (-canvas_height / 2) = scaled_y * -2.0 / canvas_height (Flip Y)
     let ndc_pos = vec2<f32>(
-        scaled_pos.x * (2.0 / canvas_width),
-        scaled_pos.y * (-2.0 / canvas_height) // Flip Y
+        scaled_pos.x * (2.0 / ubo.canvas_size.x),
+        scaled_pos.y * (-2.0 / ubo.canvas_size.y)
     );
 
     var output: VertexOutput;
-    output.position = vec4<f32>(ndc_pos, 0.0, 1.0); // z=0, w=1
+    output.position = vec4<f32>(ndc_pos, 0.0, 1.0);
     return output;
 }

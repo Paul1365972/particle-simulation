@@ -10,7 +10,7 @@ const PARTICLE_RADIUS = 1
 const SIMULATION_WIDTH = 1000
 const SIMULATION_HEIGHT = 1000
 const MOUSE_INTERACTION_RADIUS = 30
-const STATS_UPDATE_INTERVAL = 100
+const STATS_UPDATE_INTERVAL = 10
 
 const simCanvas = document.getElementById('simulationCanvas') as HTMLCanvasElement
 const statsCanvas = document.getElementById('statsCanvas') as HTMLCanvasElement
@@ -27,6 +27,7 @@ let lastStatsUpdateTime = 0
 let currentStats: SimulationStats | null = null
 let initialized = false
 let isPaused = false
+let totalTime = 0.0
 
 let isLeftDragging = false
 let isRightDragging = false
@@ -83,7 +84,7 @@ async function setup() {
 	)
 	renderer = new WebGPURenderer(simCanvas, camera, SIMULATION_WIDTH, SIMULATION_HEIGHT)
 
-	initialized = await renderer.initialize(PARTICLE_COUNT, PARTICLE_RADIUS)
+	initialized = await renderer.initialize(PARTICLE_COUNT)
 
 	if (initialized) {
 		console.log('Simulation and Renderer Initialized')
@@ -108,11 +109,11 @@ function drawStatisticsOverlay(stats: SimulationStats) {
 
 	ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
-	const histogramData = stats.momentumHistogram
+	const histogramData = stats.velocityHistogram
 	const numBins = histogramData.length
 	if (numBins === 0) return
 
-	const histWidth = canvasWidth * 0.2
+	const histWidth = canvasWidth * 0.25
 	const histHeight = canvasHeight * 0.2
 	const histX = canvasWidth - histWidth - 30
 	const histY = canvasHeight - histHeight - 30
@@ -123,20 +124,53 @@ function drawStatisticsOverlay(stats: SimulationStats) {
 	ctx.save()
 
 	ctx.fillStyle = '#ccc'
-	ctx.font = '14px sans-serif'
+	ctx.font = '20px sans-serif'
 	ctx.textAlign = 'right'
-	ctx.fillText(`Average KE: ${stats.averageKineticEnergy.toFixed(10)}`, canvasWidth - 10, 20)
-	ctx.fillText(`Total KE: ${stats.totalKineticEnergy.toFixed(10)}`, canvasWidth - 10, 40)
-	ctx.fillText(`Total DX: ${stats.totalMomentum.x.toFixed(1)}`, canvasWidth - 10, 60)
-	ctx.fillText(`Total DY: ${stats.totalMomentum.y.toFixed(1)}`, canvasWidth - 10, 80)
+	const momentumFormat = new Intl.NumberFormat('en-US', {
+		signDisplay: 'exceptZero',
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1,
+		useGrouping: false,
+	})
+	ctx.fillText(`Total Time: ${totalTime.toFixed(2)} s`, canvasWidth - 10, 25)
+	ctx.fillText(
+		`Average KE: ${stats.averageKineticEnergy.toFixed(8)} m*units^2/s^2`,
+		canvasWidth - 10,
+		50,
+	)
+	ctx.fillText(
+		`Total KE: ${stats.totalKineticEnergy.toFixed(8)} m*units^2/s^2`,
+		canvasWidth - 10,
+		75,
+	)
+	ctx.fillText(
+		`Total Momentum DX: ${momentumFormat.format(stats.totalMomentum.x)} m*units/s`,
+		canvasWidth - 10,
+		100,
+	)
+	ctx.fillText(
+		`Total Momentum DY: ${momentumFormat.format(stats.totalMomentum.y)} m*units/s`,
+		canvasWidth - 10,
+		125,
+	)
+	ctx.fillText(
+		`Average Velocity: ${stats.averageVelocity.toFixed(3)} units/s`,
+		canvasWidth - 10,
+		150,
+	)
+	ctx.fillText(
+		`Expected Speed of Sound: ${stats.speedOfSound.toFixed(3)} units/s`,
+		canvasWidth - 10,
+		175,
+	)
 
-	ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'
+	ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
 	ctx.fillRect(histX - 5, histY - 20, histWidth + 10, histHeight + 25)
 
 	ctx.fillStyle = '#ccc'
-	ctx.font = '12px sans-serif'
+	ctx.font = '15px sans-serif'
 	ctx.textAlign = 'center'
-	ctx.fillText('Momentum Distribution', histX + histWidth / 2, histY - 5)
+	ctx.fillText('Velocity Distribution', histX + histWidth / 2, histY - 10)
 
 	ctx.fillStyle = '#f7a046'
 	for (let i = 0; i < numBins; i++) {
@@ -156,11 +190,9 @@ function drawStatisticsOverlay(stats: SimulationStats) {
 	ctx.stroke()
 
 	ctx.fillStyle = '#ccc'
-	ctx.font = '10px sans-serif'
-	ctx.textAlign = 'right'
-	ctx.fillText(stats.maxMomentumForHistogram.toFixed(0), histX + histWidth, histY + histHeight + 12)
-	ctx.textAlign = 'left'
-	ctx.fillText('0', histX, histY + histHeight + 12)
+	ctx.textAlign = 'center'
+	ctx.fillText(stats.maxVelocityForHistogram.toFixed(0), histX + histWidth, histY + histHeight + 15)
+	ctx.fillText('0', histX, histY + histHeight + 15)
 
 	ctx.restore()
 }
@@ -262,9 +294,8 @@ function animate(currentTime: number) {
 	currentMouseDy = 0
 
 	if (!isPaused) {
-		for (let i = 0; i < 1; i++) {
-			simulation.update(deltaTime)
-		}
+		simulation.update(deltaTime)
+		totalTime += deltaTime
 	}
 
 	if (currentTime - lastStatsUpdateTime > STATS_UPDATE_INTERVAL) {

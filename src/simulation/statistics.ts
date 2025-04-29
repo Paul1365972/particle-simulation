@@ -5,56 +5,61 @@ export interface SimulationStats {
 	totalKineticEnergy: number
 	averageKineticEnergy: number
 	totalMomentum: Vector2D
-	momentumHistogram: number[]
-	maxMomentumForHistogram: number
+	velocityHistogram: number[]
+	maxVelocityForHistogram: number
+	averageVelocity: number
+	speedOfSound: number
 }
 
 const HISTOGRAM_BINS = 100
 
 export function calculateStatistics(particles: Particle[]): SimulationStats {
 	let totalKE = 0
-	let momentumX = 0
-	let momentumY = 0
+	let totalVelocity = 0
+	let totalMomentum = new Vector2D()
+	let maximumVelocity = 0
 
-	const energies = []
-	const momentums = []
+	const velocities = []
 	for (const p of particles) {
 		const mass = p.mass
 		const vx = p.velocity.x
 		const vy = p.velocity.y
 		const speedSq = vx * vx + vy * vy
-		const momentum = Math.sqrt(speedSq) * mass
+		const velocity = Math.sqrt(speedSq)
+		const momentum = velocity * mass
 		const ke = 0.5 * mass * speedSq
-		momentums.push(momentum)
-		energies.push(ke)
+		velocities.push(momentum)
+		maximumVelocity = Math.max(maximumVelocity, velocity)
 
 		totalKE += ke
-		momentumX += mass * vx
-		momentumY += mass * vy
+		totalVelocity += velocity
+		totalMomentum.add(p.velocity.clone().scale(mass))
 	}
 
 	const avgKE = totalKE / particles.length
-	const totalMomentum = new Vector2D(momentumX, momentumY)
+	const averageVelocity = totalVelocity / particles.length
 
-	momentums.sort((a, b) => a - b)
-
-	const maxMomentumForHistogram = momentums[Math.floor(momentums.length * 0.999)]
-	const binWidth = maxMomentumForHistogram / HISTOGRAM_BINS
+	const binWidth = maximumVelocity / HISTOGRAM_BINS
 	const histogram = new Array(HISTOGRAM_BINS).fill(0)
 
-	for (const momentum of momentums) {
-		let binIndex = Math.floor(momentum / binWidth)
+	for (const v of velocities) {
+		let binIndex = Math.floor(v / binWidth)
 		if (binIndex >= HISTOGRAM_BINS) {
 			continue
 		}
 		histogram[binIndex]++
 	}
 
+	const adiabaticIndex = 2
+	const speedOfSound = Math.sqrt(adiabaticIndex) * Math.sqrt(Math.PI / 2) * averageVelocity
+
 	return {
 		totalKineticEnergy: totalKE,
 		averageKineticEnergy: avgKE,
 		totalMomentum: totalMomentum,
-		momentumHistogram: histogram,
-		maxMomentumForHistogram,
+		velocityHistogram: histogram,
+		maxVelocityForHistogram: maximumVelocity,
+		averageVelocity,
+		speedOfSound,
 	}
 }
