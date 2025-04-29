@@ -1,0 +1,20 @@
+{
+	"name": "particle-simulation",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite --open",
+		"build": "tsc && vite build",
+		"preview": "vite preview --open",
+		"check": "tsc -p tsconfig.node.json",
+		"format": "prettier --write 'src/**/*.{ts,css}' 'public/**/*.json' '*.{json,js,ts,html}'"
+	},
+	"devDependencies": {
+		"prettier": "^3.4.2",
+		"typescript": "^5.7.2",
+		"vite": "^6.0.5",
+		"@webgpu/types": "^0.1.60"
+	},
+	"dependencies": {}
+}
