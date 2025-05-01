@@ -9,6 +9,7 @@ export interface SimulationStats {
 	maxVelocityForHistogram: number
 	averageVelocity: number
 	speedOfSound: number
+	averageFreePathDistance: number
 }
 
 const HISTOGRAM_BINS = 100
@@ -18,6 +19,7 @@ export function calculateStatistics(particles: Particle[]): SimulationStats {
 	let totalVelocity = 0
 	let totalMomentum = new Vector2D()
 	let maximumVelocity = 0
+	let totalFreePathDistance = 0
 
 	const velocities = []
 	for (const p of particles) {
@@ -34,10 +36,12 @@ export function calculateStatistics(particles: Particle[]): SimulationStats {
 		totalKE += ke
 		totalVelocity += velocity
 		totalMomentum.add(p.velocity.clone().scale(mass))
+		totalFreePathDistance += p.freePathDistance
 	}
 
 	const avgKE = totalKE / particles.length
 	const averageVelocity = totalVelocity / particles.length
+	const averageFreePathDistance = totalFreePathDistance / particles.length
 
 	const binWidth = maximumVelocity / HISTOGRAM_BINS
 	const histogram = new Array(HISTOGRAM_BINS).fill(0)
@@ -61,5 +65,6 @@ export function calculateStatistics(particles: Particle[]): SimulationStats {
 		maxVelocityForHistogram: maximumVelocity,
 		averageVelocity,
 		speedOfSound,
+		averageFreePathDistance,
 	}
 }

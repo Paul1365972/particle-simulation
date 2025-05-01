@@ -50,11 +50,8 @@ export class SpatialGrid {
 
 	getPotentialColliders(position: Vector2D): Particle[] {
 		const results: Particle[] = []
-		const centralCol = Math.max(0, Math.min(this.cols - 1, Math.floor(position.x / this.cellWidth)))
-		const centralRow = Math.max(
-			0,
-			Math.min(this.rows - 1, Math.floor(position.y / this.cellHeight)),
-		)
+		const centralCol = Math.floor(position.x / this.cellWidth)
+		const centralRow = Math.floor(position.y / this.cellHeight)
 
 		for (let r = Math.max(0, centralRow - 1); r <= Math.min(this.rows - 1, centralRow + 1); r++) {
 			for (let c = Math.max(0, centralCol - 1); c <= Math.min(this.cols - 1, centralCol + 1); c++) {

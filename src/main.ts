@@ -27,6 +27,7 @@ let lastStatsUpdateTime = 0
 let currentStats: SimulationStats | null = null
 let initialized = false
 let isPaused = false
+let deltaTime = 1.0 / 60.0
 let totalTime = 0.0
 
 let isLeftDragging = false
@@ -163,6 +164,11 @@ function drawStatisticsOverlay(stats: SimulationStats) {
 		canvasWidth - 10,
 		175,
 	)
+	ctx.fillText(
+		`Mean Free Path: ${stats.averageFreePathDistance.toFixed(3)} units`,
+		canvasWidth - 10,
+		200,
+	)
 
 	ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
 	ctx.fillRect(histX - 5, histY - 20, histWidth + 10, histHeight + 25)
@@ -262,6 +268,12 @@ function addKeyboardListeners() {
 			if (pauseIndicator) {
 				pauseIndicator.style.display = isPaused ? 'block' : 'none'
 			}
+		} else if (e.code === 'ArrowRight') {
+			e.preventDefault()
+			deltaTime *= 2
+		} else if (e.code === 'ArrowLeft') {
+			e.preventDefault()
+			deltaTime /= 2
 		}
 	})
 }
@@ -271,8 +283,6 @@ function animate(currentTime: number) {
 		requestAnimationFrame(animate)
 		return
 	}
-
-	const deltaTime = 1.0 / 60
 
 	if (isLeftDragging && !isPaused) {
 		const worldDx = currentMouseDx / camera.zoom

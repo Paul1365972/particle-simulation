@@ -8,7 +8,7 @@ export interface Particle {
 	velocity: Vector2D
 	radius: number
 	mass: number
-	color: [number, number, number, number]
+	freePathDistance: number
 }
 
 export function createParticle(
@@ -25,6 +25,6 @@ export function createParticle(
 		velocity: new Vector2D(vx, vy),
 		radius: radius,
 		mass: mass,
-		color: [Math.min(1, Math.abs(vx) * 0.5), Math.min(1, Math.abs(vy) * 0.5), 0.5, 1.0],
+		freePathDistance: 0,
 	}
 }

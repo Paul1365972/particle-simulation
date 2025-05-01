@@ -167,7 +167,6 @@ export class WebGPURenderer {
 		if (!this.device || !this.particleData || !this.particleBuffer) return
 		for (let i = 0; i < this.numParticles; i++) {
 			const p = particles[i]
-			if (!p) continue
 			this.particleData[i * 6 + 0] = p.position.x
 			this.particleData[i * 6 + 1] = p.position.y
 			this.particleData[i * 6 + 2] = p.velocity.x

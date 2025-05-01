@@ -47,7 +47,9 @@ export class ParticleSimulation {
 
 	update(deltaTime: number): void {
 		for (const p of this.particles) {
-			p.position.add(p.velocity.clone().scale(deltaTime))
+			const delta = p.velocity.clone().scale(deltaTime)
+			p.position.add(delta)
+			p.freePathDistance += delta.magnitude()
 		}
 
 		for (const p of this.particles) {
@@ -77,15 +79,15 @@ export class ParticleSimulation {
 			const potentialColliders = this.grid.getPotentialColliders(p1.position)
 
 			for (const p2 of potentialColliders) {
-				if (p1.id >= p2.id) {
-					continue
-				}
 				this.resolveCollisionElastic(p1, p2)
 			}
 		}
 	}
 
 	resolveCollisionElastic(p1: Particle, p2: Particle): void {
+		if (p1.id >= p2.id) {
+			return
+		}
 		const minDist = p1.radius + p2.radius
 		const distSq = Vector2D.distanceSq(p1.position, p2.position)
 		if (distSq >= minDist * minDist || distSq < 0.01) {
@@ -115,25 +117,9 @@ export class ParticleSimulation {
 
 		p1.velocity.sub(impulse)
 		p2.velocity.add(impulse)
-	}
 
-	resolveCollisionSoft(p1: Particle, p2: Particle): void {
-		const minDist = p1.radius + p2.radius
-		const distSq = Vector2D.distanceSq(p1.position, p2.position)
-		if (distSq >= minDist * minDist || distSq < 0.01) {
-			return
-		}
-
-		const dist = Math.sqrt(distSq)
-		const normal = p2.position
-			.clone()
-			.sub(p1.position)
-			.scale(1.0 / dist)
-
-		const impulse = normal.clone().scale(0.5)
-
-		p1.velocity.sub(impulse)
-		p2.velocity.add(impulse)
+		p1.freePathDistance = 0
+		p2.freePathDistance = 0
 	}
 
 	applyForceNearPoint(
