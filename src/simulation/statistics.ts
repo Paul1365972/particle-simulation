@@ -28,9 +28,8 @@ export function calculateStatistics(particles: Particle[]): SimulationStats {
 		const vy = p.velocity.y
 		const speedSq = vx * vx + vy * vy
 		const velocity = Math.sqrt(speedSq)
-		const momentum = velocity * mass
 		const ke = 0.5 * mass * speedSq
-		velocities.push(momentum)
+		velocities.push(velocity)
 		maximumVelocity = Math.max(maximumVelocity, velocity)
 
 		totalKE += ke

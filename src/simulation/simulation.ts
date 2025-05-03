@@ -9,7 +9,7 @@ export class ParticleSimulation {
 	grid: SpatialGrid
 	private gridCellSize: number
 
-	constructor(width: number, height: number, numParticles: number, particleRadius: number = 2) {
+	constructor(width: number, height: number, numParticles: number, particleRadius: number) {
 		this.width = width
 		this.height = height
 
@@ -112,11 +112,49 @@ export class ParticleSimulation {
 			return
 		}
 
-		const j = -velAlongNormal
-		const impulse = normal.clone().scale(j)
+		const j = -2.0 * velAlongNormal
+		const invTotalMass = 1.0 / (p1.mass + p2.mass)
 
-		p1.velocity.sub(impulse)
-		p2.velocity.add(impulse)
+		p1.velocity.sub(normal.clone().scale(j * p2.mass * invTotalMass))
+		p2.velocity.add(normal.clone().scale(j * p1.mass * invTotalMass))
+
+		p1.freePathDistance = 0
+		p2.freePathDistance = 0
+	}
+
+	resolveCollisionTerrain(p1: Particle, p2: Particle): void {
+		if (p1.id >= p2.id) {
+			return
+		}
+		const minDist = p1.radius + p2.radius
+		const distSq = Vector2D.distanceSq(p1.position, p2.position)
+		if (distSq >= minDist * minDist || distSq < 0.01) {
+			return
+		}
+
+		const dist = Math.sqrt(distSq)
+		const overlap = minDist - dist
+		const normal = p2.position
+			.clone()
+			.sub(p1.position)
+			.scale(1.0 / dist)
+
+		const correction = normal.clone().scale(overlap * 0.5)
+		p1.position.sub(correction)
+		p2.position.add(correction)
+
+		const rv = p2.velocity.clone().sub(p1.velocity)
+		const velAlongNormal = rv.dot(normal)
+
+		if (velAlongNormal > 0) {
+			return
+		}
+
+		const j = -2.0 * velAlongNormal
+		const invTotalMass = 1.0 / (p1.mass + p2.mass)
+
+		p1.velocity.sub(normal.clone().scale(j * p2.mass * invTotalMass))
+		p2.velocity.add(normal.clone().scale(j * p1.mass * invTotalMass))
 
 		p1.freePathDistance = 0
 		p2.freePathDistance = 0
